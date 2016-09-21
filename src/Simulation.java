@@ -3,8 +3,11 @@ public class Simulation{
 	//the container class for all the object-less functions in the program
 	static final int dimension=50;
 	int[][] fertility=new int[dimension][dimension];
-	public static void main(String[] args){
+	/*public static void main(String[] args){
 		new Simulation().spawnContinent();
+	}*/
+	public Simulation(){
+		spawnContinent();
 	}
 	private double random(){
 		return Math.random();
@@ -35,9 +38,9 @@ public class Simulation{
 				if(fertility[x][y]==-1){
 					fertility[x][y]=0;
 				}
-				System.out.print(fertility[x][y]);
+				//System.out.print(fertility[x][y]+" ");
 			}
-			System.out.println("");
+			//System.out.println("");
 		}
 	}
 	private double distance(int[] one,int[] two){
@@ -54,5 +57,10 @@ public class Simulation{
 			}
 		}
 		return index;
+	}
+	public void useFood(City c){
+		int f=fertility[c.x][c.y];
+		c.food+=(f*c.civilians)-(c.civilians+c.soldiers);
+		//if it's too low, send a request to the emperor
 	}
 }
