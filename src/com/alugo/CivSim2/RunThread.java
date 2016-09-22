@@ -4,7 +4,7 @@ class RunThread extends Thread{
 	float time=0f;
 	@Override
 	public void run(){
-		while(time<20f){
+		while(time<120f){
 			GUI.s.forEachCity();
 			GUI.s.forEachEmperor();			
 			try{

@@ -3,13 +3,13 @@ import java.util.ArrayList;
 
 class Emperor{
 	//request type indices
-	static final int CAPTURED=0;
-	static final int SECEDED=1;
-	static final int MORE_CIV=2;
-	static final int MORE_SOL=3;
-	static final int FOUND_CITY=4;
-	static final int STARVING=5;
-	static final int ATTACK=6;
+	static final int MORE_CIV=0;
+	static final int MORE_SOL=1;
+	static final int FOUND_CITY=2;
+	static final int STARVING=3;
+	static final int ATTACK=4;
+	//static final int CAPTURED=5;
+	//static final int SECEDED=6;
 	//static final int TRAITOR=7;
 	//static final int SUPPORT=8;
 
@@ -23,35 +23,33 @@ class Emperor{
 	static int nextNation=0;
 	ArrayList<Request> requests=new ArrayList<Request>();
 	ArrayList<Request> bufferRequests=new ArrayList<Request>();
-	float[] requestTypes=new float[7];
+	float[] requestTypes=new float[5];
 	float[] coefficients=new float[3];
-	int nation,x,y,cities;
-	public Emperor(int x,int y){
+	int nation,x,y,cities,lastCities;
+	private Emperor(){
 		GUI.s.emperors.add(this);
 		nation=nextNation;
 		nextNation++;
+		setParameters();
+	}
+	public Emperor(int x,int y){
+		this();
 		this.x=x;
 		this.y=y;
-		for(int a=0;a<requestTypes.length;a++){
-			requestTypes[a]=(float)GUI.s.random(-50,51)/10f;
-		}
-		for(int a=0;a<coefficients.length;a++){
-			coefficients[a]=(float)GUI.s.random(-20,21)/10f;
-		}
 		GUI.s.cities[x][y]=new City(x,y,nation);
 	}
 	public Emperor(City c){
-		GUI.s.emperors.add(this);
-		nation=nextNation;
-		nextNation++;
+		this();
 		x=c.x;
 		y=c.y;
+		GUI.s.changeNation(c,nation);
+	}
+	public void setParameters(){
 		for(int a=0;a<requestTypes.length;a++){
 			requestTypes[a]=(float)GUI.s.random(-50,51)/10f;
 		}
 		for(int a=0;a<coefficients.length;a++){
 			coefficients[a]=(float)GUI.s.random(-20,21)/10f;
 		}
-		GUI.s.changeNation(c,nation);
 	}
 }

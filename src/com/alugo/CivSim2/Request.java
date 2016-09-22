@@ -4,6 +4,7 @@ public class Request{
 	float priority;
 	int type;
 	City city;
+	int[] target;
 	public Request(int type,City c){
 		this.type=type;
 		Emperor e=GUI.s.getEmperor(c.nation);
