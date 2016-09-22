@@ -25,7 +25,7 @@ class Emperor{
 	ArrayList<Request> bufferRequests=new ArrayList<Request>();
 	float[] requestTypes=new float[5];
 	float[] coefficients=new float[3];
-	int nation,x,y,cities,lastCities;
+	int nation,x,y,cities,lastCities,focus=2;
 	private Emperor(){
 		GUI.s.emperors.add(this);
 		nation=nextNation;

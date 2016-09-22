@@ -93,25 +93,38 @@ public class Simulation{
 			for(int y=0;y<cities[x].length;y++){
 				City c=cities[x][y];
 				if(c!=null){
-					c.civilians+=random(-2,3);
-					c.soldiers+=random(-2,3);
-					secedeAction(c);
-					foodRequests(c);
-					surroundingsRequests(c);
+					//c.civilians+=random(-2,3);
+					//c.soldiers+=random(-2,3);
+					if(random(1)==0){
+						c.civilians-=4;
+						if(c.civilians<0){
+							c.civilians=0;
+						}
+						c.soldiers-=4;
+						if(c.soldiers<0){
+							c.soldiers=0;
+						}
+					}
+					if(!secedeAction(c)){
+						foodRequests(c);
+						surroundingsRequests(c);
+					}
 				}
 			}
 		}
 	}
-	public void secedeAction(City c){
+	public boolean secedeAction(City c){
 		if(c.loyalty<=0){
 			Emperor e=getEmperor(c.nation);
 			if(e.x==c.x && e.y==c.y){
 				periodOfWarringStates(e,null);
 			}else{
 				//new Request(Emperor.SECEDED,c);
-				new Emperor(c);
+				new Emperor(c).focus=10;
 			}
+			return true;
 		}
+		return false;
 	}
 	public void foodRequests(City c){
 		int f=fertility[c.x][c.y];
@@ -133,11 +146,14 @@ public class Simulation{
 			}
 			new Request(Emperor.STARVING,c);
 			c.loyalty--;
+			//return true;
 		}
+		//return false;
 	}
 	public void surroundingsRequests(City c){
 		ArrayList<Object> s=getSurroundings(c);
-		for(int a=0;a<s.size();a++){
+		//for(int a=0;a<s.size();a++){
+		int a=random(s.size());
 			if(s.get(a) instanceof City){
 				City c1=(City)s.get(a);
 				if(c1.nation!=c.nation){
@@ -147,11 +163,12 @@ public class Simulation{
 					}else{
 						new Request(Emperor.ATTACK,c).target=new int[]{c1.x,c1.y};
 					}
+					//return;
 				}
 			}else{
 				new Request(Emperor.FOUND_CITY,c).target=(int[])s.get(a);
 			}
-		}
+		//}
 	}
 	public ArrayList<Object> getSurroundings(City c){
 		ArrayList<Object> s=new ArrayList<Object>();
@@ -174,40 +191,52 @@ public class Simulation{
 			if(e.cities==0){
 				emperors.remove(a);
 			}else{
-				//System.out.println("Cities: "+e.cities+", Requests: "+((e.cities/2)+1)+"/"+e.requests.size());
-				for(int b=0;b<(e.cities/2)+1 && b<e.requests.size();b++){
+				if(a==0){
+					e.focus+=10;
+				}
+				for(int b=0;b<e.focus && b<e.requests.size();b++){
 					appeaseRequest(e.requests.get(b));
 				}
+				if(a==0){
+					e.focus-=10;
+				}
 				e.requests.clear();
-				if(e.cities<e.lastCities){
+				if(e.cities<=e.lastCities){
 					e.setParameters();
 					//System.out.println("Nation "+e.nation+" rewired");
 				}
 				e.lastCities=e.cities;
-				//System.out.print(e.cities+",");
 			}
 		}
-		//System.out.println("");
+		if(random(20)==0){
+			ArrayList<Emperor> e=new ArrayList<Emperor>();
+			while(emperors.size()>0){
+				int a=random(emperors.size());
+				e.add(emperors.get(a));
+				emperors.remove(a);
+			}
+			emperors=e;
+		}
 	}
 	public void appeaseRequest(Request r){
 		if(r.type==Emperor.STARVING){
-			r.city.food+=100;
+			r.city.food+=20;
 			r.city.loyalty+=2;
 		}else if(r.type==Emperor.MORE_CIV){
-			r.city.civilians+=10;
+			r.city.civilians+=2;
 			r.city.loyalty+=2;
 		}else if(r.type==Emperor.MORE_SOL){
-			r.city.soldiers+=10;
+			r.city.soldiers+=2;
 			r.city.loyalty+=2;
 		}else if(r.type==Emperor.FOUND_CITY){
 			new City(r.target[0],r.target[1],r.city.nation);
 		}else{
-			ArrayList<Object> o=getSurroundings(r.city);
+			//ArrayList<Object> o=getSurroundings(r.city);
 			if(r.type==Emperor.ATTACK){
 				City c=cities[r.target[0]][r.target[1]];
 				if(c.soldiers<r.city.soldiers){
-					//r.city.soldiers-=c.soldiers/2;
-					//c.soldiers/=2;
+					r.city.soldiers-=c.soldiers/2;
+					c.soldiers/=2;
 					Emperor e=getEmperor(c.nation);
 					if(e.x==c.x && e.y==c.y){
 						periodOfWarringStates(e,getEmperor(r.city.nation));
@@ -226,7 +255,9 @@ public class Simulation{
 		getEmperor(c.nation).cities--;
 		c.nation=n;
 		c.color=getColor(n);
-		getEmperor(n).cities++;
+		Emperor e=getEmperor(n);
+		e.cities++;
+		e.focus++;
 	}
 	public void periodOfWarringStates(Emperor e,Emperor conqueror){
 		ArrayList<City> ecs=new ArrayList<City>();
@@ -255,7 +286,7 @@ public class Simulation{
 			}
 		}
 		ecs.add(0,cities[e.x][e.y]);
-		int n=(ecs.size()/5)+1;
+		int n=(ecs.size()/15)+1;
 		if(n>3){
 			n=3;
 		}
@@ -265,7 +296,7 @@ public class Simulation{
 			if(a==0 && conqueror!=null){
 				changeNation(cap,conqueror.nation);
 			}else{
-				new Emperor(cap);
+				new Emperor(cap).focus=(e.focus/n)+1;
 			}
 			capitals[a]=new int[]{cap.x,cap.y};
 		}
