@@ -12,5 +12,6 @@ public class City{
 		this.y=y;
 		this.nation=nation;
 		color=GUI.s.getColor(nation);
+		GUI.s.getEmperor(nation).cities++;
 	}
 }

@@ -93,32 +93,22 @@ public class Simulation{
 			for(int y=0;y<cities[x].length;y++){
 				City c=cities[x][y];
 				if(c!=null){
-					cityAction(c);
+					secedeAction(c);
+					foodRequests(c);
+					surroundingsRequests(c);
 				}
 			}
-		}
-	}
-	public void cityAction(City c){
-		secedeAction(c);
-		foodRequests(c);
-		surroundingsRequests(c);
-	}
-	public void lostCity(Emperor e){
-		e.cities--;
-		if(e.cities==0){
-			emperors.remove(e);
 		}
 	}
 	public void secedeAction(City c){
 		if(c.loyalty<=0){
 			Emperor e=getEmperor(c.nation);
 			if(e.x==c.x && e.y==c.y){
-				//period of warring states event
+				periodOfWarringStates(e);
 			}else{
 				new Request(Emperor.SECEDED,c);
-				lostCity(e);
 				e=new Emperor(c.x,c.y);
-				c.nation=e.nation;
+				changeNation(c,e.nation);
 			}
 		}
 	}
@@ -127,6 +117,7 @@ public class Simulation{
 		f=(f*c.civilians)-(c.civilians+c.soldiers);
 		if(f<=0){
 			new Request(Emperor.MORE_CIV,c);
+			c.loyalty--;
 		}
 		c.food+=f;
 		if(c.food<0){
@@ -140,6 +131,7 @@ public class Simulation{
 				}
 			}
 			new Request(Emperor.STARVING,c);
+			c.loyalty--;
 		}
 	}
 	public void surroundingsRequests(City c){
@@ -150,6 +142,7 @@ public class Simulation{
 				if(c1.nation!=c.nation){
 					if(c1.soldiers>=c.soldiers){
 						new Request(Emperor.MORE_SOL,c);
+						c.loyalty--;
 					}else{
 						new Request(Emperor.ATTACK,c);
 					}
@@ -174,23 +167,97 @@ public class Simulation{
 		}
 		return s;
 	}
+	public void forEachEmperor(){
+		for(int a=0;a<emperors.size();a++){
+			Emperor e=emperors.get(a);
+			if(e.cities==0){
+				emperors.remove(a);
+			}else{
+				for(int b=0;b<e.cities && b<e.requests.size();b++){
+					appeaseRequest(e.requests.get(b));
+				}
+				e.requests.clear();
+			}
+		}
+	}
+	public void appeaseRequest(Request r){
+		if(r.type==Emperor.STARVING){
+			r.city.food+=100;
+			r.city.loyalty+=2;
+		}else if(r.type==Emperor.MORE_CIV){
+			r.city.civilians+=10;
+			r.city.loyalty+=2;
+		}else if(r.type==Emperor.MORE_SOL){
+			r.city.soldiers+=10;
+			r.city.loyalty+=2;
+		}else if(r.type==Emperor.FOUND_CITY){
+			for(int x=r.city.x-1;x<=r.city.x+1;x++){
+				for(int y=r.city.y-1;y<=r.city.y+1;y++){
+					try{
+						if(cities[x][y]==null && fertility[x][y]>0){
+							new City(x,y,r.city.nation);							
+							return;
+						}
+					}catch(ArrayIndexOutOfBoundsException nothingThere){}					
+				}
+			}
+		}/*else{
+			ArrayList<Object> o=getSurroundings(r.city);
+			if(r.type==ATTACK){
+				
+			}else if(r.type==SECEDED){
+				
+			}else if(r.type==CAPTURED){
+				
+			}
+		}*/
+	}
+	public void changeNation(City c,int n){
+		getEmperor(c.nation).cities--;
+		c.nation=n;
+		c.color=getColor(n);
+		getEmperor(n).cities++;
+	}
 	public void periodOfWarringStates(Emperor e){//INCOMPLETE
 		ArrayList<City> ecs=new ArrayList<City>();
-		//integer n determines number of future capitals based on e.cities
+		int n=e.cities/5;
+		if(n==0){
+			n=1;
+		}
 		for(int x=0;x<cities.length;x++){
 			for(int y=0;y<cities[x].length;y++){
-				if(cities[x][y].nation==e.nation){
-					//adds cities to ecs based on how much food they have
+				City c=cities[x][y];
+				if(c!=null && c.nation==e.nation && (c.x!=e.x || c.y!=e.y)){
+					boolean add=true;
+					for(int a=0;a<ecs.size();a++){
+						if(ecs.get(a).food<=c.food){
+							ecs.add(a,c);
+							add=false;
+							break;
+						}
+					}
+					if(add){
+						ecs.add(c);
+					}
 				}
-				if(ecs.size()==e.cities){
+				if(ecs.size()==e.cities-1){
 					break;
 				}
 			}
-			if(ecs.size()==e.cities){
+			if(ecs.size()==e.cities-1){
 				break;
 			}
 		}
-		//assigns new nations to the cities of index n and less in ecs
-		//assigns all cities in ecs after index n to the city (with index n or less) closest to it
+		ecs.add(0,cities[e.x][e.y]);
+		int[][] capitals=new int[n][];
+		for(int a=0;a<n;a++){
+			City cap=ecs.get(a);
+			new Emperor(cap);
+			capitals[a]=new int[]{cap.x,cap.y};
+		}
+		for(int a=n;a<ecs.size();a++){
+			City c=ecs.get(a);
+			changeNation(c,ecs.get((int)closestPoint(new int[]{c.x,c.y},capitals)[0]).nation);
+		}
 	}
 }
