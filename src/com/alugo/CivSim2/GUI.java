@@ -7,20 +7,17 @@ public class GUI extends Frame{
 	static Simulation s=new Simulation();
 	public static void main(String[] args){
 		new GUI();
-		/*new City(5,5);
-		new City(5,7);
-		new City(10,10);*/
 	}
 	public GUI(){
 		setVisible(true);
 		setSize(500,500);
 		setTitle("Alugo's Civilization Simulator 2.0");
 		s.spawnContinent();
-		//invalidate();
+		s.forEachCity();
 	}
 	@Override
 	public void paint(Graphics g){
-		g.translate(0,50);
+		g.translate(50,50);
 		int scale=7;
 		for(int x=0;x<s.fertility.length;x++){
 			for(int y=0;y<s.fertility[x].length;y++){

@@ -1,4 +1,5 @@
 package com.alugo.CivSim2;
+import java.util.ArrayList;
 
 class Emperor{
 	//request type indices
@@ -14,20 +15,29 @@ class Emperor{
 
 	//coefficient indices
 	static final int LOYALTY=0;
-	static final int REQUEST_AGE=1;
-	static final int SAME_TYPE=2;
-	static final int DISTANCE=3;
-	static final int LOYALTY_BASED=4;
+	static final int DISTANCE=1;
+	static final int LOYALTY_BASED=2;
+	//static final int REQUEST_AGE=3;
+	//static final int SAME_TYPE=4;
 
 	static int nextNation=0;
-	int[] requestTypes=new int[9];
-	int[] coefficients=new int[6];
+	ArrayList<Request> requests=new ArrayList<Request>();
+	float[] requestTypes=new float[9];
+	float[] coefficients=new float[3];
 	int nation,x,y;
+	int cities=1;
 	public Emperor(int x,int y){
 		GUI.s.emperors.add(this);
 		nation=nextNation;
 		nextNation++;
 		this.x=x;
 		this.y=y;
+		for(int a=0;a<requestTypes.length;a++){
+			requestTypes[a]=(float)GUI.s.random(-50,51)/10f;
+		}
+		for(int a=0;a<coefficients.length;a++){
+			coefficients[a]=(float)GUI.s.random(-20,21)/10f;
+		}
+		GUI.s.cities[x][y]=new City(x,y,nation);
 	}
 }
