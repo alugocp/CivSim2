@@ -221,8 +221,11 @@ public class Simulation{
 				/*if(a==0){
 					e.focus+=10;
 				}*/
-				for(int b=0;b<e.focus && b<e.requests.size();b++){
-					appeaseRequest(e.requests.get(b));
+				int s=0;
+				for(int b=0;b<e.focus+s && b<e.requests.size();b++){
+					if(!appeaseRequest(e.requests.get(b))){
+						s++;
+					}
 				}
 				/*if(a==0){
 					e.focus-=10;
@@ -247,7 +250,7 @@ public class Simulation{
 			emperors=e;
 		}*/
 	}
-	public void appeaseRequest(Request r){
+	public boolean appeaseRequest(Request r){
 		if(r.type==Emperor.STARVING){
 			r.city.food+=20;
 			r.city.loyalty+=random(-1,4);
@@ -258,6 +261,9 @@ public class Simulation{
 			r.city.soldiers+=2;
 			r.city.loyalty+=random(-1,4);
 		}else if(r.type==Emperor.FOUND_CITY){
+			if(cities[r.target[0]][r.target[1]]!=null){
+				return false;
+			}
 			new City(r.target[0],r.target[1],r.city.nation);
 		}else{
 			//ArrayList<Object> o=getSurroundings(r.city);
@@ -285,6 +291,7 @@ public class Simulation{
 				
 			}*/
 		}
+		return true;
 	}
 	public void changeNation(City c,int n){
 		getEmperor(c.nation).cities--;
@@ -314,14 +321,14 @@ public class Simulation{
 				if(c!=null && c.nation==merges.nation){
 					changeNation(c,gains.nation);
 				}
-				/*if(merges.cities==0){
+				if(merges.cities==0){
 					break;
-				}*/
+				}
 			}
-			/*if(merges.cities==0){
+			if(merges.cities==0){
 				//System.out.print("success! ");
 				break;
-			}*/
+			}
 		}
 		//emperors.remove(merges);
 		//System.out.println(merges.cities);
@@ -368,13 +375,13 @@ public class Simulation{
 						ecs.add(c);
 					}
 				}
-				/*if(ecs.size()==e.cities-1){
+				if(ecs.size()==e.cities-1){
 					break;
-				}*/
+				}
 			}
-			/*if(ecs.size()==e.cities-1){
+			if(ecs.size()==e.cities-1){
 				break;
-			}*/
+			}
 		}
 		ecs.add(0,cities[e.x][e.y]);
 		int n=ecs.size()/50;
