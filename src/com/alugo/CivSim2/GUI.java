@@ -33,7 +33,7 @@ public class GUI extends Frame{
 	@Override
 	public void paint(Graphics g){
 		g.translate(50,50);
-		int scale=7;
+		int scale=5;
 		for(int x=0;x<s.dimension;x++){
 			for(int y=0;y<s.dimension;y++){
 				if(s.cities[x][y]!=null){
@@ -51,5 +51,10 @@ public class GUI extends Frame{
 				g.fillRect(x*scale,y*scale,scale,scale);
 			}
 		}
+		/*g.setColor(Color.BLACK);
+		for(int a=0;a<s.emperors.size();a++){
+			Emperor e=s.emperors.get(a);
+			g.fillRect(e.x*scale,e.y*scale,scale,scale);
+		}*/
 	}
 }

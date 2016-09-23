@@ -2,9 +2,10 @@ package com.alugo.CivSim2;
 import java.awt.Color;
 
 public class City{
+	static final int INITIAL_LOYALTY=20;
 	int x,y,nation;
-	int soldiers=GUI.s.random(50,101),civilians=GUI.s.random(50,101);
-	int food=0,loyalty=5;
+	int soldiers=10,civilians=20;
+	int food=0,loyalty=INITIAL_LOYALTY;
 	Color color;
 	public City(int x,int y,int nation){
 		GUI.s.cities[x][y]=this;
