@@ -4,7 +4,7 @@ import java.awt.Color;
 
 public class Simulation{
 	//the container class for all the object-less functions in the program
-	static final int dimension=50;
+	static final int dimension=70;
 	ArrayList<Emperor> emperors=new ArrayList<Emperor>();
 	int[][] fertility=new int[dimension][dimension];
 	City[][] cities=new City[dimension][dimension];
@@ -36,7 +36,7 @@ public class Simulation{
 					int f=seeds[(int)closest[0]][2];
 					if(f==1){
 						f=(int)(closest[1]*2);
-						if(random(150)==0){
+						if(random(300)==0){
 							new Emperor(x,y).focus=2;
 						}
 					}
@@ -65,12 +65,12 @@ public class Simulation{
 	}
 	public Color getColor(int nation){
 		Emperor e=getEmperor(nation);
-		int r=(nation*e.x)%255;
-		int g=(((e.y+e.x)/2)+255-(nation*20))%255;
+		int r=(nation*e.x*10)%255;
+		int g=(((e.y*20)+(e.x*5))+255-(nation*20))%255;
 		while(g<0){
 			g+=255;
 		}
-		int b=(((nation/60)+100)*(e.y+5))%255;
+		int b=(((nation/60)+100)*(e.y+5)*6)%255;
 		return new Color(r,g,b);
 	}
 	public Emperor getEmperor(int n){
@@ -160,6 +160,7 @@ public class Simulation{
 		boolean attack=false;
 		boolean friendlyCityNearby=false;
 		Emperor e=getEmperor(c.nation);
+		Request foundCity=null;
 		for(int a=0;a<s.size();a++){
 			//int a=random(s.size());
 			if(s.get(a) instanceof City){
@@ -183,31 +184,37 @@ public class Simulation{
 						}
 					}
 					//return;
-				}else{
+				}else if(c1.x==c.x || c1.y==c.y){
 					friendlyCityNearby=true;
 				}
 				attack=true;
 			}else if(!city){
-				new Request(Emperor.FOUND_CITY,c).target=(int[])s.get(a);
+				foundCity=new Request(Emperor.FOUND_CITY,c);
+				foundCity.target=(int[])s.get(a);
 				city=true;
 			}
 		}
-		if(!friendlyCityNearby && e.cities==1){
+		if(!friendlyCityNearby && e.cities>1){
 			cities[c.x][c.y]=null;
 			e.cities--;
+			if(foundCity!=null){
+				e.requests.remove(foundCity);
+			}
 		}
 	}
 	public ArrayList<Object> getSurroundings(City c){
 		ArrayList<Object> s=new ArrayList<Object>();
 		for(int x=c.x-1;x<=c.x+1;x++){
 			for(int y=c.y-1;y<=c.y+1;y++){
-				try{
-					if(cities[x][y]!=null){
-						s.add(random(s.size()+1),cities[x][y]);
-					}else if(fertility[x][y]>0){
-						s.add(random(s.size()+1),new int[]{x,y});
-					}
-				}catch(ArrayIndexOutOfBoundsException nothingThere){}
+				if(!(x==c.x && y==c.y)){
+					try{
+						if(cities[x][y]!=null){
+							s.add(random(s.size()+1),cities[x][y]);
+						}else if(fertility[x][y]>0){
+							s.add(random(s.size()+1),new int[]{x,y});
+						}
+					}catch(ArrayIndexOutOfBoundsException nothingThere){}
+				}
 			}
 		}
 		return s;
@@ -269,7 +276,7 @@ public class Simulation{
 			//ArrayList<Object> o=getSurroundings(r.city);
 			if(r.type==Emperor.ATTACK){
 				City c=cities[r.target[0]][r.target[1]];
-				if(c.soldiers<r.city.soldiers){
+				if(c!=null && c.soldiers<r.city.soldiers){
 					r.city.soldiers-=c.soldiers/2;
 					c.soldiers/=2;
 					Emperor e=getEmperor(c.nation);
@@ -384,7 +391,7 @@ public class Simulation{
 			}
 		}
 		ecs.add(0,cities[e.x][e.y]);
-		int n=ecs.size()/50;
+		int n=ecs.size()/100;
 		if(n==0){
 			n=1;
 		}

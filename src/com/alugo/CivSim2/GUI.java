@@ -12,7 +12,7 @@ public class GUI extends Frame{
 	}
 	public GUI(){
 		setVisible(true);
-		setSize(500,500);
+		setSize(600,600);
 		setTitle("Alugo's Civilization Simulator 2.0");
 		s.spawnContinent();
 		//s.forEachCity();
@@ -33,7 +33,7 @@ public class GUI extends Frame{
 	@Override
 	public void paint(Graphics g){
 		g.translate(50,50);
-		int scale=5;
+		int scale=6;
 		for(int x=0;x<s.dimension;x++){
 			for(int y=0;y<s.dimension;y++){
 				if(s.cities[x][y]!=null){
