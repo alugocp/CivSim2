@@ -86,13 +86,17 @@ def surroundingsRequests(c):
 			if not thing.nation==c.nation:
 				e1=getEmperor(thing.nation)
 				diff=abs(e.cities-e1.cities)
-				if diff<20:
+				if diff<20 and e.age>10 and e1.age>10:
 					if rand(0,2)==0:
-						merge(e,e1)
-						#periodOfWarringStates(e1,e)
+						if e1.cities>100 and rand(0,3)==0:
+							periodOfWarringStates(e1,e)
+						else:
+							merge(e,e1)
 					else:
-						merge(e1,e)
-						#periodOfWarringStates(e,e1)
+						if e.cities>100 and rand(0,3)==0:
+							periodOfWarringStates(e,e1)
+						else:
+							merge(e1,e)
 					return
 				elif not attack:
 					if thing.soldiers>=c.soldiers:
@@ -128,6 +132,7 @@ def getSurroundings(city):
 def forEachEmperor():
 	for a in range(len(emperors)-1,-1,-1):
 		e=emperors[a]
+		e.age+=1
 		if e.cities==0:
 			emperors.remove(e)
 		else:
@@ -225,7 +230,7 @@ def periodOfWarringStates(e,conqueror):
 			if len(ecs)==e.cities-1:
 				break
 	ecs.insert(0,land[e.ix][e.iy])
-	n=int(len(ecs)/100)
+	n=int(len(ecs)/25)#100
 	if n==0:
 		n=1
 	if n>5:
@@ -262,6 +267,7 @@ class Emperor():
 		self.cities=0
 		self.lastCities=0
 		self.focus=50
+		self.age=0
 		if "index" in params:
 			emperors.insert(params["index"],self)
 		else:
