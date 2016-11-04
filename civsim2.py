@@ -51,7 +51,7 @@ def secedeAction(c):
 	if c.loyalty<=0:
 		e=getEmperor(c.nation)
 		if e.ix==c.ix and e.iy==c.iy:
-			periodOfWarringStates(e,None)
+			periodOfWarringStates(e,None,c)
 		else:
 			secede(c)
 		return True
@@ -86,15 +86,15 @@ def surroundingsRequests(c):
 			if not thing.nation==c.nation:
 				e1=getEmperor(thing.nation)
 				diff=abs(e.cities-e1.cities)
-				if diff<20 and e.age>10 and e1.age>10:
+				if diff<20 and e.age>5 and e1.age>5:
 					if rand(0,2)==0:
 						if e1.cities>100 and rand(0,3)==0:
-							periodOfWarringStates(e1,e)
+							periodOfWarringStates(e1,e,thing)
 						else:
 							merge(e,e1)
 					else:
 						if e.cities>100 and rand(0,3)==0:
-							periodOfWarringStates(e,e1)
+							periodOfWarringStates(e,e1,c)
 						else:
 							merge(e1,e)
 					return
@@ -128,24 +128,43 @@ def getSurroundings(city):
 							s.insert(int(rand(0,len(s)+1)),land[x][y])
 						elif land[x][y]>0:
 							s.insert(int(rand(0,len(s)+1)),[x,y])
+						else:
+							delta=[x-city.ix,y-city.iy]
+							coor=[x,y]
+							edge=False
+							swim=4
+							while swim>0 and land[coor[0]][coor[1]]==0:
+								coor[0]+=delta[0]
+								coor[1]+=delta[1]
+								swim-=1
+								if coor[0]<0 or coor[0]>=dimension or coor[1]<0 or coor[1]>=dimension:
+									edge=True
+									break
+							if edge==False:
+								if land[coor[0]][coor[1]]>0:
+									s.insert(int(rand(0,len(s)+1)),[coor[0],coor[1]])
 	return s
 def forEachEmperor():
 	for a in range(len(emperors)-1,-1,-1):
 		e=emperors[a]
 		e.age+=1
-		if e.cities==0:
-			emperors.remove(e)
-		else:
-			s=0
-			for b in range(e.focus+s):
-				if b>=len(e.requests):
-					break
-				if not e.requests[b].city.nation==e.nation or not appeaseRequest(e.requests[b]):
-					s+=1
-			e.requests=[]
-			if e.cities<=e.lastCities:
-				setParameters(e)
-			e.lastCities=e.cities
+		if e.cities>0:
+			l=land[e.ix][e.iy]
+			if isinstance(l,City) and l.nation==e.nation:
+				s=0
+				for b in range(e.focus+s):
+					if b>=len(e.requests):
+						break
+					if not e.requests[b].city.nation==e.nation or not appeaseRequest(e.requests[b]):
+						s+=1
+				e.requests=[]
+				if e.cities<=e.lastCities:
+					setParameters(e)
+				e.lastCities=e.cities
+			elif isinstance(l,City):
+				merge(getEmperor(l.nation),e)
+			else:
+				City(e.ix,e.iy,e.nation)
 def appeaseRequest(r):
 	if r.type==STARVING:
 		r.city.food+=20
@@ -169,7 +188,10 @@ def appeaseRequest(r):
 			c.soldiers=int(c.soldiers/2)
 			e=getEmperor(c.nation)
 			if e.ix==c.ix and e.iy==c.iy:
-				periodOfWarringStates(e,getEmperor(r.city.nation))
+				if rand(0,10)==0:
+					merge(getEmperor(r.city.nation),e)
+				else:
+					periodOfWarringStates(e,getEmperor(r.city.nation),c)
 			else:
 				changeNation(c,r.city.nation)
 		else:
@@ -200,8 +222,7 @@ def merge(gains,merges):
 				break
 		if merges.cities==0:
 			break
-	hisCan.graphPopulation()
-	canvas.update_idletasks()
+	updateCanvas()
 def secede(r):
 	e=getEmperor(r.nation)
 	Emperor(city=r,index=emperors.index(e))
@@ -212,29 +233,27 @@ def secede(r):
 			c=land[x][y]
 			if isinstance(c,City) and c.nation==e.nation and distance([r.rx,r.ry],[c.rx,c.ry])<500:
 				if e.ix==c.ix and e.iy==c.iy:
-					periodOfWarringStates(e,getEmperor(r.nation))
+					periodOfWarringStates(e,getEmperor(r.nation),c)
 					return
 				ecs.append(c)
 	for a in ecs:
 		changeNation(a,r.nation)
 		canvas.update_idletasks()
 	hisCan.graphPopulation()
-def periodOfWarringStates(e,conqueror):
+def periodOfWarringStates(e,conqueror,city):
 	ecs=[]
 	for x in range(dimension):
 		for y in range(dimension):
 			c=land[x][y]
-			if isinstance(c,City) and c.nation==e.nation and not (c.ix==e.ix and c.iy==e.iy):
+			if isinstance(c,City) and c.nation==e.nation and not (c.ix==city.ix and c.iy==city.iy):
 				add=True
-				ecs.append(c)
+				ecs.insert(int(rand(0,len(ecs))),c)
 			if len(ecs)==e.cities-1:
 				break
-	ecs.insert(0,land[e.ix][e.iy])
-	n=int(len(ecs)/25)#100
+	ecs.insert(0,city)
+	n=int(len(ecs)/35)
 	if n==0:
 		n=1
-	if n>5:
-		n=5
 	capitals=[None for a in range(n)]
 	i=emperors.index(e)
 	for a in range(n):
@@ -246,9 +265,6 @@ def periodOfWarringStates(e,conqueror):
 			else:
 				changeNation(cap,conqueror.nation)
 		else:
-			b=int(rand(a,len(ecs)))
-			ecs.insert(a,ecs[b])
-			ecs.remove(ecs[b+1])
 			cap=ecs[a]
 			Emperor(city=cap,index=i)
 		capitals[a]=[cap.ix,cap.iy]
@@ -256,8 +272,7 @@ def periodOfWarringStates(e,conqueror):
 		c=ecs[a]
 		nation=ecs[int(closest([c.ix,c.iy],capitals)[0])].nation
 		changeNation(c,nation)
-	hisCan.graphPopulation()
-	canvas.update_idletasks()
+	updateCanvas()
 nextNation=0
 class Emperor():
 	def __init__(self,**params):
@@ -286,6 +301,8 @@ class Emperor():
 		pos=getRealPos([self.ix,self.iy])
 		self.rx=pos[0]
 		self.ry=pos[1]
+		r=yDis#/2
+		self.dot=canvas.create_oval(self.rx-r,self.ry-r,self.rx+r,self.ry+r,fill="black")
 def setParameters(e):
 	e.requestTypes=[None for a in range(5)]
 	for a in range(len(e.requestTypes)):
@@ -313,6 +330,14 @@ class Request():
 				return
 			a+=1
 		e.requests.append(self)
+def updateCanvas():
+	for a in range(len(emperors)):
+		e=emperors[a]
+		if e.cities==0:
+			canvas.delete(e.dot)
+	hisCan.graphPopulation()
+	canvas.update_idletasks()
+	root.update()
 def getTag(x,y):
 	return str(x)+","+str(y)
 def rand(min,max):
@@ -481,9 +506,11 @@ t=0
 while t<60:
 	forEachCity()
 	forEachEmperor()
-	hisCan.graphPopulation()
-	canvas.update_idletasks()
-	root.update()
+	updateCanvas()
+	for a in range(len(emperors)-1,-1,-1):
+		e=emperors[a]
+		if e.cities==0:
+			emperors.remove(e)
 	sleep(0.5)
 	t+=0.5
 print("All done!")
