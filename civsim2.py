@@ -112,11 +112,32 @@ def surroundingsRequests(c):
 			foundCity.target=thing
 			city=True
 	if not friendlyCityNearby and t>4:
-		land[c.ix][c.iy]=c.fertility
+		collapse(c)
 		canvas.itemconfig(getTag(c.ix,c.iy),fill=getFertilityColor(c.fertility))
 		getEmperor(c.nation).cities-=1
 		if not foundCity==None:
 			e.requests.remove(foundCity)
+def collapse(city):
+	land[city.ix][city.iy]=city.fertility
+	e=getEmperor(city.nation)
+	if city.ix==e.ix and city.iy==e.iy:
+		ecs=[]
+		for x in range(dimension):
+			for y in range(dimension):
+				c=land[x][y]
+				if isinstance(c,City) and c.nation==e.nation:
+					ecs.insert(int(rand(0,len(ecs))),c)
+		if len(ecs)>0:
+			moveCapital(e,ecs[0].ix,ecs[0].iy)
+def moveCapital(e,ix,iy):
+	e.ix=ix
+	e.iy=iy
+	pos=getRealPos([e.ix,e.iy])
+	e.rx=pos[0]
+	e.ry=pos[1]
+	r=yDis
+	canvas.delete(e.dot)
+	e.dot=canvas.create_oval(e.rx-r,e.ry-r,e.rx+r,e.ry+r,fill=getColor(e.nation),outline="black")
 def getSurroundings(city):
 	s=[]
 	for x in range(city.ix-1,city.ix+2):
@@ -149,22 +170,16 @@ def forEachEmperor():
 		e=emperors[a]
 		e.age+=1
 		if e.cities>0:
-			l=land[e.ix][e.iy]
-			if isinstance(l,City) and l.nation==e.nation:
-				s=0
-				for b in range(e.focus+s):
-					if b>=len(e.requests):
-						break
-					if not e.requests[b].city.nation==e.nation or not appeaseRequest(e.requests[b]):
-						s+=1
-				e.requests=[]
-				if e.cities<=e.lastCities:
-					setParameters(e)
-				e.lastCities=e.cities
-			elif isinstance(l,City):
-				merge(getEmperor(l.nation),e)
-			else:
-				City(e.ix,e.iy,e.nation)
+			s=0
+			for b in range(e.focus+s):
+				if b>=len(e.requests):
+					break
+				if not e.requests[b].city.nation==e.nation or not appeaseRequest(e.requests[b]):
+					s+=1
+			e.requests=[]
+			if e.cities<=e.lastCities:
+				setParameters(e)
+			e.lastCities=e.cities
 def appeaseRequest(r):
 	if r.type==STARVING:
 		r.city.food+=20
@@ -246,7 +261,7 @@ def periodOfWarringStates(e,conqueror,city):
 		for y in range(dimension):
 			c=land[x][y]
 			if isinstance(c,City) and c.nation==e.nation and not (c.ix==city.ix and c.iy==city.iy):
-				add=True
+				#add=True
 				ecs.insert(int(rand(0,len(ecs))),c)
 			if len(ecs)==e.cities-1:
 				break
@@ -257,16 +272,15 @@ def periodOfWarringStates(e,conqueror,city):
 	capitals=[None for a in range(n)]
 	i=emperors.index(e)
 	for a in range(n):
-		if a==0:
-			cap=ecs[0]
-			if conqueror==None:
-				setParameters(getEmperor(cap.nation))
+		cap=ecs[a]
+		if a==0 and not conqueror==None:
+			changeNation(cap,conqueror.nation)
+		else:
+			if e.ix==cap.ix and e.iy==cap.iy:
+				setParameters(e)
 				changeNation(cap,cap.nation)
 			else:
-				changeNation(cap,conqueror.nation)
-		else:
-			cap=ecs[a]
-			Emperor(city=cap,index=i)
+				Emperor(city=cap,index=i)
 		capitals[a]=[cap.ix,cap.iy]
 	for a in range(n,len(ecs)):
 		c=ecs[a]
@@ -301,8 +315,8 @@ class Emperor():
 		pos=getRealPos([self.ix,self.iy])
 		self.rx=pos[0]
 		self.ry=pos[1]
-		r=yDis#/2
-		self.dot=canvas.create_oval(self.rx-r,self.ry-r,self.rx+r,self.ry+r,fill="black")
+		r=yDis
+		self.dot=canvas.create_oval(self.rx-r,self.ry-r,self.rx+r,self.ry+r,fill=getColor(self.nation),outline="black")
 def setParameters(e):
 	e.requestTypes=[None for a in range(5)]
 	for a in range(len(e.requestTypes)):
