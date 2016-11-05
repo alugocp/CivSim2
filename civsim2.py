@@ -114,30 +114,23 @@ def surroundingsRequests(c):
 	if not friendlyCityNearby and t>4:
 		collapse(c)
 		canvas.itemconfig(getTag(c.ix,c.iy),fill=getFertilityColor(c.fertility))
-		getEmperor(c.nation).cities-=1
 		if not foundCity==None:
 			e.requests.remove(foundCity)
 def collapse(city):
 	land[city.ix][city.iy]=city.fertility
 	e=getEmperor(city.nation)
-	if city.ix==e.ix and city.iy==e.iy:
+	e.cities-=1
+	if city.ix==e.ix and city.iy==e.iy and e.cities>0:
 		ecs=[]
 		for x in range(dimension):
 			for y in range(dimension):
 				c=land[x][y]
 				if isinstance(c,City) and c.nation==e.nation:
-					ecs.insert(int(rand(0,len(ecs))),c)
-		if len(ecs)>0:
-			moveCapital(e,ecs[0].ix,ecs[0].iy)
-def moveCapital(e,ix,iy):
-	e.ix=ix
-	e.iy=iy
-	pos=getRealPos([e.ix,e.iy])
-	e.rx=pos[0]
-	e.ry=pos[1]
-	r=yDis
-	canvas.delete(e.dot)
-	e.dot=canvas.create_oval(e.rx-r,e.ry-r,e.rx+r,e.ry+r,fill=getColor(e.nation),outline="black")
+					ecs.append(c)
+		emp=Emperor(city=ecs[int(rand(0,len(ecs)))],index=emperors.index(e))
+		for a in range(0,len(ecs)):
+			changeNation(ecs[a],emp.nation)
+	updateCanvas()
 def getSurroundings(city):
 	s=[]
 	for x in range(city.ix-1,city.ix+2):
@@ -240,6 +233,10 @@ def merge(gains,merges):
 	updateCanvas()
 def secede(r):
 	e=getEmperor(r.nation)
+	if r.ix==e.ix and r.iy==e.iy:
+		setParameters(e)
+		changeNation(r,r.nation)
+		return
 	Emperor(city=r,index=emperors.index(e))
 	canvas.update_idletasks()
 	ecs=[]
@@ -254,14 +251,14 @@ def secede(r):
 	for a in ecs:
 		changeNation(a,r.nation)
 		canvas.update_idletasks()
-	hisCan.graphPopulation()
+	#hisCan.graphPopulation()
+	updateCanvas()
 def periodOfWarringStates(e,conqueror,city):
 	ecs=[]
 	for x in range(dimension):
 		for y in range(dimension):
 			c=land[x][y]
 			if isinstance(c,City) and c.nation==e.nation and not (c.ix==city.ix and c.iy==city.iy):
-				#add=True
 				ecs.insert(int(rand(0,len(ecs))),c)
 			if len(ecs)==e.cities-1:
 				break
@@ -312,11 +309,12 @@ class Emperor():
 			self.ix=params["x"]
 			self.iy=params["y"]
 			City(self.ix,self.iy,self.nation)
-		pos=getRealPos([self.ix,self.iy])
-		self.rx=pos[0]
-		self.ry=pos[1]
+		self.rx=land[self.ix][self.iy].rx
+		self.ry=land[self.ix][self.iy].ry
 		r=yDis
-		self.dot=canvas.create_oval(self.rx-r,self.ry-r,self.rx+r,self.ry+r,fill=getColor(self.nation),outline="black")
+		self.dot=canvas.create_oval(scaled(self.rx-r,scroll[0]),scaled(self.ry-r,scroll[1]),scaled(self.rx+r,scroll[0]),scaled(self.ry+r,scroll[1]),fill="black")
+def scaled(num,scroll):
+	return (num*scale)+scroll
 def setParameters(e):
 	e.requestTypes=[None for a in range(5)]
 	for a in range(len(e.requestTypes)):
@@ -410,11 +408,25 @@ def spawnContinent():
 				drawHexagon(canvas,[x,y],"blue")
 def getColor(nation):
 		e=getEmperor(nation)
-		r=(nation*e.ix*10)%255
-		g=(((e.iy*20)+(e.ix*5))+255-(nation*20))%155
-		while g<0 :
-			g+=255
-		b=(((nation/60)+100)*(e.iy+5)*6)%255
+		pos=getRealPos([e.ix,e.iy])
+		if nation%3==0:
+			r=(nation*e.ix*10)%255
+			g=(((e.iy*20)+(e.ix*5))+255-(nation*20))%155
+			while g<0 :
+				g+=255
+			b=(((nation/60)+100)*(e.iy+5)*6)%255
+		elif nation%2==0:
+			r=(pos[0]+pos[1])%255
+			g=(pos[1]-(2*nation)+e.ix)%255
+			while g<0:
+				g+=255
+			b=((e.ix+nation)*e.iy)%255
+		else:
+			r=(300-(nation*(pos[0]-pos[1])))%255
+			while r<0:
+				r+=255
+			g=((pos[0]+pos[1])/2)%255
+			b=(e.ix*e.iy*nation)%255
 		return "#%02x%02x%02x" % (r,g,b)
 def getFertilityColor(f):
 	h=0.333
