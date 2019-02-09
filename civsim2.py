@@ -1,8 +1,8 @@
 from colorsys import hsv_to_rgb
 from random import random
-from Tkinter import *
+from tkinter import *
 from time import sleep
-from thread import start_new_thread
+#from threading import start_new_thread
 import math
 
 INITIAL_LOYALTY=20
@@ -155,7 +155,8 @@ def getSurroundings(city):
 									edge=True
 									break
 							if edge==False:
-								if land[coor[0]][coor[1]]>0:
+								l=land[coor[0]][coor[1]]
+								if type(l) is City or l>0:
 									s.insert(int(rand(0,len(s)+1)),[coor[0],coor[1]])
 	return s
 def forEachEmperor():
@@ -427,7 +428,7 @@ def getColor(nation):
 				r+=255
 			g=((pos[0]+pos[1])/2)%255
 			b=(e.ix*e.iy*nation)%255
-		return "#%02x%02x%02x" % (r,g,b)
+		return "#%02x%02x%02x" % (int(r),int(g),int(b))
 def getFertilityColor(f):
 	h=0.333
 	s=0.2+(f/150)
